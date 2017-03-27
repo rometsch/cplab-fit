@@ -60,8 +60,9 @@ int main() {
 
 	double ext_var = xisq*in_var;
 
-	cout 	<< "mean = " << mean << endl
-			<< "xisq = " << xisq << endl
+	cout 	<< scientific
+			<< "mean = " << mean << endl
+			<< "chisq = " << xisq << endl
 			<< "innere varianz = " << in_var << endl
 			<< "externe varianz = " << ext_var << endl;
 
