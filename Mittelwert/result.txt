@@ -1,0 +1,4 @@
+mean = 299793
+xisq = 0.228076
+innere varianz = 0.830612
+externe varianz = 0.189443
