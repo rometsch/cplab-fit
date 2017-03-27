@@ -1,2 +1,2 @@
-# cplab-reg
-Computational Physics Lab - Regression
+# cplab-fit
+Computational Physics Lab - Fitting and so on
