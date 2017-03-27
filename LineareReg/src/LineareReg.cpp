@@ -19,6 +19,16 @@ int main() {
 
 	unsigned int L = 12; // Anzahl der Messwerte
 
+
+	return 0;
+}
+
+vector<double> lin_reg_1st_pol(vector<double> x, vector<double> y, vector<double> y_err) {
+	/* Lineare Regression der Funktion y = f(x) = a*x + b
+	 * Zurueckgegeben wird ein Vector mit den Eintraegen (a,b,var_a,var_b)
+	 */
+	unsigned int L = x.size();
+
 	// Hilfsgrößen berechnen
 	double S = 0;
 	double Sx = 0;
@@ -27,7 +37,7 @@ int main() {
 	double Sxy = 0;
 
 	for (unsigned int i=0; i<L; i++) {
-		double invvar = err[i]*err[i];
+		double invvar = y_err[i]*y_err[i];
 		S += invvar;
 		Sx += x[i]*invvar;
 		Sy += y[i]*invvar;
@@ -38,6 +48,8 @@ int main() {
 
 	double a = (Sxx*Sy - Sx*Sxy)/Det;
 	double b = (S*Sxy-Sx*Sy)/Det;
+	double var_a = Sxx/Det;
+	double var_b = S/Det;
 
-	return 0;
+	// TODO: Return
 }
