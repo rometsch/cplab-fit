@@ -14,12 +14,12 @@ data = np.loadtxt("Agdecay.dat");
 
 delta_t = 5;
 
-gammas = data[:,1];
+Ns = data[:,1];
 times = data[:,0]*delta_t;
 
 # Calculate errors of counts as sqrt(N)
-errsq = gammas;
-#errsq = np.ones(gammas.size)
+errsq = Ns;
+# errsq = np.ones(Ns.size)
 
 def print_results(params, method):
     print("==============================");
@@ -29,7 +29,7 @@ def print_results(params, method):
     print(" lambda 2 = {:.3e}".format(params[1]));
     print("     N1   = {:.3e}".format(params[2]));
     print("     N2   = {:.3e}".format(params[3]));
-    print("  gamma 0 = {:.3e}".format(params[4]));
+    print("     N0   = {:.3e}".format(params[4]));
     print("==============================");
     print("  Half-life 1 = {:.3e} sec".format(np.log(2)/params[0]));
     print("  Half-life 2 = {:.3e} sec".format(np.log(2)/params[1]));
@@ -40,14 +40,13 @@ def func(params,t):
     l2 = params[1];
     N1 = params[2];
     N2 = params[3];
-    gamma0 = params[4];    
-    return l1*N1*np.exp(-l1*t) + l2*N2*np.exp(-l2*t) + gamma0;
+    N0 = params[4];
+    return N1*np.exp(-l1*t) + N2*np.exp(-l2*t) + N0;
 
 def chisq(params):
     """ Defines the ChiSq for the model and the given data """
     f_vals = func(params,times);
-    return np.sum( (gammas - f_vals)**2/errsq )
-    # Division by gamma comes from the fact, that err = sqrt(gamma)
+    return np.sum( (Ns - f_vals)**2/errsq )
 
 def chisq_grad(params):
     """ Defines the ChiSq for the model and the given data """
@@ -56,17 +55,17 @@ def chisq_grad(params):
     N1 = params[2];
     N2 = params[3];
     f_vals = func(params,times);
-    df_dl1 = (1-l1**2)*N1*np.exp(-l1*times);
-    df_dl2 = (1-l2**2)*N2*np.exp(-l2*times);
-    df_dN1 = l1*np.exp(-l1*times);
-    df_dN2 = l2*np.exp(-l2*times);
-    df_dgamma0 = 1;
+    df_dl1 = (-times*N1+N1/l1)*np.exp(-l1*times);
+    df_dl2 = (-times*N2+N2/l2)*np.exp(-l2*times);
+    df_dN1 = np.exp(-l1*times);
+    df_dN2 = np.exp(-l2*times);
+    df_dN0 = 1;
     gradient = -2*np.array(
-        [   np.sum( df_dl1*(gammas-f_vals)/errsq ),
-            np.sum( df_dl2*(gammas-f_vals)/errsq ),
-            np.sum( df_dN1*(gammas-f_vals)/errsq ),
-            np.sum( df_dN2*(gammas-f_vals)/errsq ),
-            np.sum( df_dgamma0*(gammas-f_vals)/errsq )
+        [   np.sum( df_dl1*(Ns-f_vals)/errsq ),
+            np.sum( df_dl2*(Ns-f_vals)/errsq ),
+            np.sum( df_dN1*(Ns-f_vals)/errsq ),
+            np.sum( df_dN2*(Ns-f_vals)/errsq ),
+            np.sum( df_dN0*(Ns-f_vals)/errsq )
         ]);
     return gradient;
     # Division by gamma comes from the fact, that err = sqrt(gamma)
@@ -74,10 +73,10 @@ def chisq_grad(params):
 
 def plot_data_fit(params,times):
     """ Plot the data along with the fitted function """
-    plt.plot(times, gammas, "b.");
+    plt.plot(times, Ns, "b.");
     plt.plot(times, func(params,times), "g");
 
-initial_guess = np.array([0.03,3e-3,28000,34000,5]);
+initial_guess = np.array([0.03,3e-3,655,104,5]);
 
 res_simplex = optimize.minimize(chisq,initial_guess,method='Nelder-Mead');
 res_cg = optimize.minimize(chisq,initial_guess,jac=chisq_grad,method='CG');
@@ -86,7 +85,6 @@ res_cg = optimize.minimize(chisq,initial_guess,jac=chisq_grad,method='CG');
 print(res_simplex)
 print_results(res_simplex.x,"Simplex");
 print(res_cg)
-#print_results(res_cg.x,"CG");
+print_results(res_cg.x,"CG");
 
 plot_data_fit(res_simplex.x,times)
-
