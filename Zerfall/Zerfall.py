@@ -55,8 +55,8 @@ def chisq_grad(params):
     N1 = params[2];
     N2 = params[3];
     f_vals = func(params,times);
-    df_dl1 = (-times*N1+N1/l1)*np.exp(-l1*times);
-    df_dl2 = (-times*N2+N2/l2)*np.exp(-l2*times);
+    df_dl1 = (-times*N1)*np.exp(-l1*times);
+    df_dl2 = (-times*N2)*np.exp(-l2*times);
     df_dN1 = np.exp(-l1*times);
     df_dN2 = np.exp(-l2*times);
     df_dN0 = 1;
@@ -75,16 +75,19 @@ def plot_data_fit(params,times):
     """ Plot the data along with the fitted function """
     plt.plot(times, Ns, "b.");
     plt.plot(times, func(params,times), "g");
+    plt.show()
 
-initial_guess = np.array([0.03,3e-3,655,104,5]);
+# initial_guess = np.array([0.03,3e-3,655,104,5]);
+initial_guess = np.array([1e-1,1e-2,1000,100,10]);
 
 res_simplex = optimize.minimize(chisq,initial_guess,method='Nelder-Mead');
-res_cg = optimize.minimize(chisq,initial_guess,jac=chisq_grad,method='CG');
+#res_cg = optimize.minimize(chisq,initial_guess,method='CG',jac=chisq_grad);
+res_cg = optimize.fmin_cg(chisq, initial_guess, fprime=chisq_grad);
 # print(params_cg)
 
 print(res_simplex)
 print_results(res_simplex.x,"Simplex");
 print(res_cg)
-print_results(res_cg.x,"CG");
+print_results(res_cg,"CG");
 
-plot_data_fit(res_simplex.x,times)
+# plot_data_fit(res_simplex.x,times)
