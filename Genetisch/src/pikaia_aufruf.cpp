@@ -15,6 +15,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <vector>
+#include <cstdint>
 
 using namespace std;
 
@@ -27,16 +28,49 @@ extern "C"  // Definition der FORTRAN-Routinen pikaia und rninit
 // Implement a class to handle ChiSq calculation which can be used with PIKAIA
 int Npts;
 vector<float> X,Y,Sigma;
-float scale_max [5] = {10, 100, 100, 50, 1};
+float scale_max [5] = {10, 100, 100, 50, 1.0};
 float scale_min [5] = {0,0,0,1,0};
 
 float scale_parameter(float pikaia_param, int ind) {
 	return scale_min[ind] + pikaia_param*(scale_max[ind] - scale_min[ind]);
 }
 
-float func(int Nparams, float *params, float x) {
-	// fit function taking parameters from PIKAIA
-	// first two parameters in p are a and b in : f(x) = a*x + b
+//float func(int Nparams, float *params, float x) {
+//	// fit function taking parameters from PIKAIA
+//	// first two parameters in p are a and b in : f(x) = a*x + b
+//	const float PI = acos(0.);
+//	//Scaling
+//	int Nsins = (Nparams-2)/3;
+//	vector<float> amp;
+//	vector<float> freq;
+//	vector<float> phase;
+//	float a = scale_parameter(params[0],0);
+//	float b = scale_parameter(params[1],1);
+//	for (int i=0; i<Nsins; i++) {
+//		amp.push_back(scale_parameter(params[2+3*i],2));
+//		freq.push_back(scale_parameter(params[3+3*i],3));
+//		phase.push_back(scale_parameter(params[4+3*i],4));
+//	}
+//	float sum = a*x+b;
+//	for (int i=0; i<Nsins; i++) {
+//		sum += amp[i]*sin( 2*PI*(x/freq[i] + phase[i]) );
+//	}
+//	return sum;
+//}
+//
+//float calc_ChiSq(int Nparams, float *params) {
+//	// n = number of parameters
+//	// x = array of parameters
+//	float sum = 0;
+//	for (int i=0; i<Npts; i++) {
+//		sum += pow( (Y[i] - func(Nparams,params,X[i]) )/Sigma[i] , 2);
+//	}
+//	return sum;
+//}
+
+static float fitness(int *n, float *params) {
+	// Calc fitness as 1/ChiSq
+	int Nparams = *n;
 	const float PI = acos(0.);
 	//Scaling
 	int Nsins = (Nparams-2)/3;
@@ -50,27 +84,17 @@ float func(int Nparams, float *params, float x) {
 		freq.push_back(scale_parameter(params[3+3*i],3));
 		phase.push_back(scale_parameter(params[4+3*i],4));
 	}
-	float sum = a*x+b;
-	for (int i=0; i<Nsins; i++) {
-		sum += amp[i]*sin( 2*PI*(x/freq[i] + phase[i]) );
-	}
-	return sum;
-}
-
-float calc_ChiSq(int Nparams, float *params) {
-	// n = number of parameters
-	// x = array of parameters
-	float ChiSq = 0;
+	float sum1 = 0;
 	for (int i=0; i<Npts; i++) {
-		ChiSq += pow( (Y[i] - func(Nparams,params,X[i]) )/Sigma[i] , 2);
+		float sum2 = a*X[i] + b;
+		for (int j=0; j<Nsins; j++) {
+			sum2 = sum2 + amp[j]*sin(2*PI*(X[i]/freq[j] + phase[j]));
+		}
+		double xi = (sum2 - Y[i])/Sigma[i];
+		sum1 = sum1 + xi*xi;
 	}
-	return ChiSq;
-}
 
-static float fitness(int *n, float *params) {
-	// Calc fitness as 1/ChiSq
-	int Nparams = *n;
-	return 1./calc_ChiSq(Nparams, params);
+	return 1./sum1;
 }
 
 void fit_data_lin_with_sins(int Nsins, bool verbose) {
@@ -80,9 +104,9 @@ void fit_data_lin_with_sins(int Nsins, bool verbose) {
 	int status; // status
 	int Nparams = 2+3*Nsins;   // Zahl der Parameter
 	int rn=rand();
-	float ctrl[]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0};  // Steuerungsfeld
+	float ctrl[]={-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,0};  // Steuerungsfeld
 	rninit_(rn);
-	float *params = new float[Nparams]; // 2 Parameter
+	float *params = new float[Nparams];
 	// Aufruf von PIKAIA
 	if(verbose) {
 		cout 	<< "Fitting data with a linear and sine functions" << endl
@@ -102,21 +126,25 @@ void fit_data_lin_with_sins(int Nsins, bool verbose) {
 	}
 	// Auswerten
 	if (verbose) {
-		cout 	<< "status = " << status << endl
-				<< "ChiSq/(Npts - Nparam) = " << calc_ChiSq(Nparams,params) << endl
+		cout
+				<< "Nparams = " << Nparams << endl
+				<< "status = " << status << endl
+//				<< "ChiSq/(Npts - Nparam) = " << calc_ChiSq(Nparams,params)/(Npts-Nparams) << endl
+				<< "final fitness = " << f << endl
+				<< "ChiSq = 1/final fitness = " << 1/f << endl
 				<< "a = " << a << endl
 				<< "b = " << b << endl;
 
 		for (int i=0; i<Nsins; i++) {
 			cout
-				<< "sine numer " << i << endl
+				<< "sine number " << i+1 << endl
 				<< "A = " << amp[i] << endl
 				<< "P = " << freq[i] << endl
 				<< "Phi = " << phase[i] << endl;
 		}
 	}
 	// function to use with gnuplot
-	cout << "chisq_reduced_" << Nsins << " = " << calc_ChiSq(Nparams,params) << endl;
+	cout << "chisq_reduced_" << Nsins << " = " << 1/f << endl;
 	cout 	<< "sin" << Nsins << "(x) = "
 			<< a << "*x + "
 			<< b;
@@ -189,6 +217,15 @@ int main(){  // aufrufendes Hauptprogramm
 	}
 	Npts = X.size();
 
+
+//	fit_data_lin_with_sins(0,true);
+//	cout << endl;
+//	fit_data_lin_with_sins(1,true);
+//	cout << endl;
+//	fit_data_lin_with_sins(3,true);
+//	cout << endl;
+//	fit_data_lin_with_sins(5,false);
+//	cout << endl;
 
 	fit_data_lin_with_sins(0,false);
 	cout << endl;
