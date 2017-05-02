@@ -1,0 +1,54 @@
+#==================================================
+#         Author : Thomas Rometsch
+#      Plot name : data fit
+#==================================================
+
+reset
+clear
+
+#==================================================
+#             Definitions
+#==================================================
+
+writepdf = 0;
+
+file1 = "lichtkurve.dat"
+
+label0 = "lichtkurve"
+
+output_name = "fits.pdf"
+
+#==================================================
+#             Set terminal
+#==================================================
+
+if (writepdf!=1) {
+  set term qt enhanced
+}
+if (writepdf==1) {
+  set term pdfcairo enhanced size 7in,4in dashed
+  set output output_name
+}
+
+#==================================================
+#             Style
+#==================================================
+
+set style line 1 lt 7 ps 0.3 lc rgb "red" lw 1
+set style line 2 lt 7 ps 0.3 lc rgb "orange" lw 1
+set style line 3 lt 7 ps 0.3 lc rgb "#6495ED" lw 1
+set style line 4 lt 4 lc rgb "black" lw 1
+set style line 5 lt 1 lc rgb "forest-green" lw 1 ps 1
+
+#set format y "%2.1tx10^{%L}"
+#==================================================
+#             Axis Labels
+#==================================================
+
+set ylabel "y"
+set xlabel "x"
+
+
+#==================================================
+#             Analytic Functions
+#==================================================

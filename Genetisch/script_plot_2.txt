@@ -1,0 +1,41 @@
+
+
+set samples 100000
+
+#==================================================
+#             Labels
+#==================================================
+
+label1 = "m=0 , {/Symbol c}^2 = ".sprintf("%f",chisq_reduced_0);
+label2 = "m=1 , {/Symbol c}^2 = ".sprintf("%f",chisq_reduced_1);
+label3 = "m=3 , {/Symbol c}^2 = ".sprintf("%f",chisq_reduced_3);
+label4 = "m=5 , {/Symbol c}^2 = ".sprintf("%f",chisq_reduced_5);
+
+
+
+#==================================================
+#             Plot
+#==================================================
+
+set key top right
+set multiplot layout 2,2
+
+set title label1
+plot  file1 u 1:2 notitle ls 1 w p, \
+      sin0(x) ls 2 notitle
+
+set title label2
+plot  file1 u 1:2 notitle ls 1 w p, \
+      sin1(x) ls 3 notitle
+
+set title label3
+plot  file1 u 1:2 notitle ls 1 w p, \
+      sin3(x) ls 4 notitle
+
+set title label4
+plot  file1 u 1:2 notitle ls 1 w p, \
+      sin5(x) ls 5 notitle
+
+if (writepdf!=1) {
+  pause -1
+}
